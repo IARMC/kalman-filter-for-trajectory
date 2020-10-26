@@ -26,6 +26,7 @@ data <- data[!is.na(data$file_name),]
 data <- data[!is.na(data$unixtime),]
 
 trajectory_after_kalman <- list()
+#TODO: QUIT
 vk <- c()
 vlat <- c()
 vlon <- c()
@@ -56,7 +57,7 @@ prueba_funcion <- function(pkg) { #TODO:QUIT
 
 get_dimentional_kalman <- function(dimention){
   #input: class dimention => vector
-  #dimention <- trayectoria$latitude #TODO: QUIT
+  dimention <- trayectoria$latitude #TODO: QUIT
   tamanio_dimention <- length(dimention)
   
   binnacle <- data.frame(Medicion = c(1:tamanio_dimention), 
@@ -67,10 +68,11 @@ get_dimentional_kalman <- function(dimention){
                          Cov = 0, 
                          trayectoria = 0)
   
-  results_from_kalman <- c()
   
-  Q <- 0  #Process noise covariance - Ruido del proceso
-  R <- 0  #Measurement noise covariance - Ruido del sensor
+  results_from_kalman <- c(1:tamanio_dimention)
+  
+  Q <- 0  #Process noise covariance - Ruido del proceso     X
+  R <- 0  #Measurement noise covariance - Ruido del sensor  X
   X <- 0  #Value - Valor filtrado
   P <- 0  #Estimation error covariance - Error estimado
   K <- 0  #Kalman gain - Ganancia de Kalman [0~1]
@@ -80,7 +82,16 @@ get_dimentional_kalman <- function(dimention){
   Q <- 0.5 #0.125   0.33   0.5
   R <- 0.125
   P <- 1 #No importante, se ajusta durante el proceso
-  results_from_kalman <- c()
+  
+  for (i in 1:tamanio_dimention) {
+    Medicion <- dimention[i]
+    M <- Medicion
+    P <- P + Q
+    K <- P / (P + R)
+    X <- X + K * (M - X)
+    P <- (1 - K) * P
+  }
+  
   for (i in 1:tamanio_dimention) {
     Medicion <- dimention[i]
     binnacle[i, 'Medicion'] <- Medicion
@@ -95,22 +106,24 @@ get_dimentional_kalman <- function(dimention){
     #Correccion
     K <- P / (P + R)  #[0~1]
     binnacle[i, 'GainK'] <- K
-    #print(K)
+    
     X <- X + K * (M - X)
-    binnacle[i, 'MedicionK'] <- X
-    #print(X)
+    if(i>1){binnacle[i, 'MedicionK'] <- X}
+    else{binnacle[i, 'MedicionK'] <- Medicion}
+    
+    #results_from_kalman[i] <- X
+    
     P <- (1 - K) * P
     binnacle[i, 'Cov'] <- P
-    #print(P)
-    results_from_kalman <- c(results_from_kalman, X)
   }
   
   #TODO: MED
-  
-  binnacle$MedicionK <- results_from_kalman
+  #results_from_kalman <- results_from_kalman[-c(1)]
+  #binnacle$MedicionK <- results_from_kalman
   #par(lwd=0.5)
-  plot(binnacle[,'Medicion'],type="o",col="red", ylab="",main="Latitude Output")
-  
+  plot(binnacle$Medicion,type="l",col="red", ylab="",main="Results before Kalman")
+  plot(binnacle$MedicionK,type="l",col="blue", ylab="",main="Results after Kalman")
+  #zoom::zm()
   return(binnacle)
 }
 
@@ -126,14 +139,14 @@ apply_kalman <- function(trayectoria) {
   
   binnacle_latitude <- get_dimentional_kalman(trayectoria$latitude)
   binnacle_latitude$trayectoria <- trayectoria$file_name
-  binnacle_latitude$MedicionK
+
   
   binnacle_longitude <- get_dimentional_kalman(trayectoria$longitude)
   binnacle_longitude$trayectoria <- trayectoria$file_name
   
   #TODO: UNIR BITACORAS
   #TODO: CREAR GRAFICOS POR TRAYECTORIA
-  
+  #TODO: ASOGNAR EL TIPO DE DATO CORREPONDIENTE A SER RECIBIDO
   new_trajectory <- create_dataframe_kalman(binnacle_longitude$MedicionK, binnacle_latitude$MedicionK, trayectoria$file_name, trayectoria$unixtime)
   
   #return cbind entre kalman_longitude, kalman_latitude, file_name, unixtime
@@ -159,6 +172,7 @@ for (count in 1:cant_tr){
   }
 }
 #TODO: GUARDAR BITACORAS
+#TODO: GENERAR GRAFICOS
 
 
 
