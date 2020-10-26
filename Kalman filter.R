@@ -54,7 +54,11 @@ prueba_funcion <- function(pkg) {
   print(valor)
 }
 
-
+apply_kalman <- function(trayectoria) {
+  print(trayectoria)
+  #return cbind entre kalman_longitude, kalman_latitude, file_name, unixtime
+  return(trayectoria)
+}
 
 
 #####     Recorrido de trayectorias     #####
@@ -65,10 +69,11 @@ for (count in 1:cant_tr){
   cant_points <- nrow(trayectoria_individual)
   
   if(cant_points <= 2){
-    
+    trajectory_after_kalman[[count]] <- trayectoria_individual
     
   }else{
-    
+    tr_kalman <- apply_kalman(trayectoria_individual)
+    trajectory_after_kalman[[count]] <- tr_kalman
     
   }
 }
