@@ -26,10 +26,6 @@ data <- data[!is.na(data$file_name),]
 data <- data[!is.na(data$unixtime),]
 
 trajectory_after_kalman <- list()
-#TODO: QUIT
-vk <- c()
-vlat <- c()
-vlon <- c()
 
 #####     Division de los datos por trayectorias     #####
 array_name <- data.frame(file_name=unique(data$file_name)) 
@@ -49,15 +45,9 @@ for(count in 1:length(unique(todas$file_name))){
 }
 
 #####     Funciones Kalman     #####
-prueba_funcion <- function(pkg) { #TODO:QUIT
-  #ambito local de la funcion
-  valor <- 5
-  print(valor)
-}
-
 get_dimentional_kalman <- function(dimention){
   #input: class dimention => vector
-  dimention <- trayectoria$latitude #TODO: QUIT
+  #dimention <- trayectoria$latitude #TODO: QUIT
   tamanio_dimention <- length(dimention)
   
   binnacle <- data.frame(Medicion = c(1:tamanio_dimention), 
@@ -67,9 +57,6 @@ get_dimentional_kalman <- function(dimention){
                          GainK = 0, 
                          Cov = 0, 
                          trayectoria = 0)
-  
-  
-  results_from_kalman <- c(1:tamanio_dimention)
   
   Q <- 0  #Process noise covariance - Ruido del proceso     X
   R <- 0  #Measurement noise covariance - Ruido del sensor  X
@@ -83,6 +70,7 @@ get_dimentional_kalman <- function(dimention){
   R <- 0.125
   P <- 1 #No importante, se ajusta durante el proceso
   
+  #Calibrar valores
   for (i in 1:tamanio_dimention) {
     Medicion <- dimention[i]
     M <- Medicion
@@ -108,33 +96,33 @@ get_dimentional_kalman <- function(dimention){
     binnacle[i, 'GainK'] <- K
     
     X <- X + K * (M - X)
-    if(i>1){binnacle[i, 'MedicionK'] <- X}
-    else{binnacle[i, 'MedicionK'] <- Medicion}
-    
-    #results_from_kalman[i] <- X
+    if(i>2){
+      binnacle[i, 'MedicionK'] <- X
+    }else{
+      binnacle[i, 'MedicionK'] <- Medicion
+    }
     
     P <- (1 - K) * P
     binnacle[i, 'Cov'] <- P
   }
   
   #TODO: MED
-  #results_from_kalman <- results_from_kalman[-c(1)]
-  #binnacle$MedicionK <- results_from_kalman
   #par(lwd=0.5)
-  plot(binnacle$Medicion,type="l",col="red", ylab="",main="Results before Kalman")
-  plot(binnacle$MedicionK,type="l",col="blue", ylab="",main="Results after Kalman")
+  plot(binnacle$Medicion,type="l",col="red", xlab="Points", ylab="Mediciones", main="Results Kalman Filter")
+  points(binnacle$MedicionK,type="l",col="blue")
+  legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  #Aplicar zoom al grafico
   #zoom::zm()
+  
   return(binnacle)
 }
 
 create_dataframe_kalman <- function(longitude, latitude, file_name, unixtime){
-  kalman_dataframe <- data.frame(longitude, latitude, filename, unixtime)
+  kalman_dataframe <- data.frame(longitude, latitude, file_name, unixtime)
   return(kalman_dataframe)
 }
 
 apply_kalman <- function(trayectoria) {
-  print(trayectoria) #TODO: QUIT
-  
   trayectoria <- trayectoria_individual #TODO: QUIT
   
   binnacle_latitude <- get_dimentional_kalman(trayectoria$latitude)
@@ -146,23 +134,30 @@ apply_kalman <- function(trayectoria) {
   
   #TODO: UNIR BITACORAS
   #TODO: CREAR GRAFICOS POR TRAYECTORIA
-  #TODO: ASOGNAR EL TIPO DE DATO CORREPONDIENTE A SER RECIBIDO
-  new_trajectory <- create_dataframe_kalman(binnacle_longitude$MedicionK, binnacle_latitude$MedicionK, trayectoria$file_name, trayectoria$unixtime)
+  new_trajectory <- create_dataframe_kalman(longitude=binnacle_longitude$MedicionK, 
+                                            latitude=binnacle_latitude$MedicionK, 
+                                            file_name=trayectoria$file_name, 
+                                            unixtime=trayectoria$unixtime)
   
   #return cbind entre kalman_longitude, kalman_latitude, file_name, unixtime
   return(new_trajectory)
 }
 
+#####     Almacenamiento en disco duro de los resultados     #####
+#Almacenamiento de las bitacoras
+#Almacenamiento de los resultados
+#Almacenameinto de los graficos
 
 #####     Recorrido de trayectorias     #####
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
-count <- 1 #TODO: QUIT
+count <- 19 #TODO: QUIT
 for (count in 1:cant_tr){
   trayectoria_individual <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(trayectoria_individual)
   
   if(cant_points <= 2){
-    trajectory_after_kalman[[count]] <- trayectoria_individual
+    tr_kalman <- trayectoria_individual
+    trajectory_after_kalman[[count]] <- tr_kalman
     
   }else{
     
@@ -170,6 +165,13 @@ for (count in 1:cant_tr){
     trajectory_after_kalman[[count]] <- tr_kalman
     
   }
+  
+  plot(x=trayectoria_individual$longitude, y=trayectoria_individual$latitude,type="l",col="red", xlab="Longitud", ylab="Latitud", main="Results Kalman Filter")
+  points(x=tr_kalman$longitude, y=tr_kalman$latitude,type="l",col="blue")
+  #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
+  legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  
+  
 }
 #TODO: GUARDAR BITACORAS
 #TODO: GENERAR GRAFICOS
