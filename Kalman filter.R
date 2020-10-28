@@ -47,7 +47,6 @@ for(count in 1:length(unique(todas$file_name))){
 #####     Funciones Kalman     #####
 get_dimentional_kalman <- function(dimention){
   #input: class dimention => vector
-  #dimention <- trayectoria$latitude #TODO: QUIT
   tamanio_dimention <- length(dimention)
   
   binnacle <- data.frame(Medicion = c(1:tamanio_dimention), 
@@ -65,7 +64,7 @@ get_dimentional_kalman <- function(dimention){
   K <- 0  #Kalman gain - Ganancia de Kalman [0~1]
   M <- 0  #Measurement MEDICION
   
-  #valores iniciales
+  #Valores iniciales
   Q <- 0.5 #0.125   0.33   0.5
   R <- 0.125
   P <- 1 #No importante, se ajusta durante el proceso
@@ -106,14 +105,6 @@ get_dimentional_kalman <- function(dimention){
     binnacle[i, 'Cov'] <- P
   }
   
-  #TODO: MED
-  #par(lwd=0.5)
-  #plot(binnacle$Medicion,type="l",col="red", xlab="Points", ylab="Mediciones", main="Results Kalman Filter")
-  #points(binnacle$MedicionK,type="l",col="blue")
-  #legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
-  #Aplicar zoom al grafico
-  #zoom::zm()
-  
   return(binnacle)
 }
 
@@ -123,11 +114,11 @@ create_dataframe_kalman <- function(longitude, latitude, file_name, unixtime){
 }
 
 apply_kalman <- function(trayectoria) {
-  #Filtro de kalman para la Latitud
+  #Aplicar kalman a la latitud
   binnacle_latitude <- get_dimentional_kalman(trayectoria$latitude)
   binnacle_latitude$trayectoria <- trayectoria$file_name
 
-  #Filtro de kalman para la Longitud
+  #Aplicar kalman a la longitud
   binnacle_longitude <- get_dimentional_kalman(trayectoria$longitude)
   binnacle_longitude$trayectoria <- trayectoria$file_name
   
@@ -136,7 +127,6 @@ apply_kalman <- function(trayectoria) {
                                             file_name=trayectoria$file_name, 
                                             unixtime=trayectoria$unixtime)
   
-  #return cbind entre kalman_longitude, kalman_latitude, file_name, unixtime
   return(new_trajectory)
 }
 
@@ -160,9 +150,12 @@ establecer_directorio_kalman <- function(dataset){
   
   return(getwd())
 }
+
 #Almacenamiento de las bitacoras
 
+
 #Almacenamiento de los resultados
+
 
 #Almacenameinto de los graficos
 guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
@@ -172,6 +165,8 @@ guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
   points(x=tr_kalman$longitude, y=tr_kalman$latitude,type="l",col="blue")
   #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
   legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  #Aplicar zoom al grafico
+  #zoom::zm()
   dev.off()
 }
 
@@ -189,22 +184,23 @@ guardar_graficos <- function(original, kalman){
 
 #####     Recorrido de trayectorias para aplicar Kalman     #####
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
+
 for (count in 1:cant_tr){
   print(paste("Aplicando Filtro de Kalman. Trayectoria ",count,"...", sep = ""))
+  
   trayectoria_individual <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(trayectoria_individual)
   
   if(cant_points <= 2){
     tr_kalman <- trayectoria_individual
-    trajectory_after_kalman[[count]] <- tr_kalman
-    
   }else{
     tr_kalman <- apply_kalman(trayectoria_individual)
-    trajectory_after_kalman[[count]] <- tr_kalman
   }
+  
+  trajectory_after_kalman[[count]] <- tr_kalman
 }
 
-#####     Alamcenar Datos      #####
+#####     Almacenar Datos      #####
 establecer_directorio_kalman(dataset)
 
 guardar_graficos(lista_trayectorias_sinprocesar, trajectory_after_kalman)
