@@ -26,6 +26,8 @@ data <- data[!is.na(data$file_name),]
 data <- data[!is.na(data$unixtime),]
 
 trajectory_after_kalman <- list()
+binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
 
 #####     Division de los datos por trayectorias     #####
 array_name <- data.frame(file_name=unique(data$file_name)) 
@@ -42,6 +44,15 @@ lista_trayectorias_sinprocesar <- list ()
 for(count in 1:length(unique(todas$file_name))){
   tray_corresp <- subset(todas, todas$file_name == array_name$file_name[count])
   lista_trayectorias_sinprocesar[[count]] <-  tray_corresp
+}
+
+#####     Funciones de tratameinto de las bitacoras     #####
+add_binnacle_longitude <- function(newBinnacle){
+  binnacle_for_longitude <<-  rbind(binnacle_for_longitude, newBinnacle)
+}
+
+add_binnacle_latitude <- function(newBinnacle){
+  binnacle_for_latitude <<-  rbind(binnacle_for_latitude, newBinnacle)
 }
 
 #####     Funciones Kalman     #####
@@ -117,10 +128,12 @@ apply_kalman <- function(trayectoria) {
   #Aplicar kalman a la latitud
   binnacle_latitude <- get_dimentional_kalman(trayectoria$latitude)
   binnacle_latitude$trayectoria <- trayectoria$file_name
-
+  add_binnacle_latitude(binnacle_latitude)
+  
   #Aplicar kalman a la longitud
   binnacle_longitude <- get_dimentional_kalman(trayectoria$longitude)
   binnacle_longitude$trayectoria <- trayectoria$file_name
+  add_binnacle_longitude(binnacle_longitude)
   
   new_trajectory <- create_dataframe_kalman(longitude=binnacle_longitude$MedicionK, 
                                             latitude=binnacle_latitude$MedicionK, 
@@ -205,10 +218,10 @@ establecer_directorio_kalman(dataset)
 
 guardar_graficos(lista_trayectorias_sinprocesar, trajectory_after_kalman)
 
-
+binnacle_prueba()
 #TODO: UNIR BITACORAS
 #TODO: GUARDAR BITACORAS
 
 
-
+binnacle_for_latitude
 
