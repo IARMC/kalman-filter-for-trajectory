@@ -165,10 +165,15 @@ establecer_directorio_kalman <- function(dataset){
 }
 
 #Almacenamiento de las bitacoras
-
+save_binnacles <- function(){
+  write.table(binnacle_for_latitude, file ="binnacle-latitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(binnacle_for_longitude, file ="binnacle-longitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+}
 
 #Almacenamiento de los resultados
-
+save_trajectories <- function(list){
+  write.table(do.call(rbind,list), file ="trajectories-after-kalman.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+}
 
 #Almacenameinto de los graficos
 guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
@@ -218,10 +223,8 @@ establecer_directorio_kalman(dataset)
 
 guardar_graficos(lista_trayectorias_sinprocesar, trajectory_after_kalman)
 
-binnacle_prueba()
-#TODO: UNIR BITACORAS
-#TODO: GUARDAR BITACORAS
+save_binnacles()
 
+save_trajectories(trajectory_after_kalman)
 
-binnacle_for_latitude
 
