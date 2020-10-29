@@ -12,9 +12,11 @@ user <- 'postgres';
 pass <- 'toor';
 drv <- dbDriver(dbdriver)
 con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pass = pass)
+print("Conexion establecida")
 
 #####     Obtencion de la informacion desde la base de datos     #####
 dataset <- "brasil"
+print("Obtencion de los datos")
 data <- dbGetQuery(con, "SELECT longitude, latitude, unixtime, file_name FROM public.brasil WHERE  longitude BETWEEN  '-37.095' and '-37.04' and latitude BETWEEN  '-10.99' and '-10.89' and unixtime > '13/09/14' and unixtime <= '29/07/15' ")
 dbDisconnect(con)
 
@@ -24,10 +26,12 @@ data <- data[!is.na(data$longitude),]
 data <- data[!is.na(data$latitude),]
 data <- data[!is.na(data$file_name),]
 data <- data[!is.na(data$unixtime),]
+print("Dataset Limpiado")
 
 trajectory_after_kalman <- list()
 binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
 binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+print("Varaibles de almacenameinto declaradas")
 
 #####     Division de los datos por trayectorias     #####
 array_name <- data.frame(file_name=unique(data$file_name)) 
@@ -45,6 +49,7 @@ for(count in 1:length(unique(todas$file_name))){
   tray_corresp <- subset(todas, todas$file_name == array_name$file_name[count])
   lista_trayectorias_sinprocesar[[count]] <-  tray_corresp
 }
+print("Division por trayectorias finalizada")
 
 #####     Funciones de tratameinto de las bitacoras     #####
 add_binnacle_longitude <- function(newBinnacle){
@@ -86,8 +91,10 @@ get_dimentional_kalman <- function(dimention){
     M <- Medicion
     P <- P + Q
     K <- P / (P + R)
+    binnacle[i, 'GainK'] <- K
     X <- X + K * (M - X)
     P <- (1 - K) * P
+    binnacle[i, 'Cov'] <- P
   }
   
   for (i in 1:tamanio_dimention) {
@@ -103,7 +110,6 @@ get_dimentional_kalman <- function(dimention){
     
     #Correccion
     K <- P / (P + R)  #[0~1]
-    binnacle[i, 'GainK'] <- K
     
     X <- X + K * (M - X)
     if(i>2){
@@ -113,7 +119,6 @@ get_dimentional_kalman <- function(dimention){
     }
     
     P <- (1 - K) * P
-    binnacle[i, 'Cov'] <- P
   }
   
   return(binnacle)
@@ -161,6 +166,7 @@ establecer_directorio_kalman <- function(dataset){
   dir.create(dataset)
   setwd(paste(getwd(),simbol,dataset,sep=""))
   
+  print("Directorio Establecido")
   return(getwd())
 }
 
@@ -168,11 +174,13 @@ establecer_directorio_kalman <- function(dataset){
 save_binnacles <- function(){
   write.table(binnacle_for_latitude, file ="binnacle-latitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
   write.table(binnacle_for_longitude, file ="binnacle-longitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Bitacoras guardadas")
 }
 
 #Almacenamiento de los resultados
 save_trajectories <- function(list){
   write.table(do.call(rbind,list), file ="trajectories-after-kalman.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Trayectorias guardadas")
 }
 
 #Almacenameinto de los graficos
@@ -198,6 +206,8 @@ guardar_graficos <- function(original, kalman){
   }else{
     print("Error en la cantidad de trayectorias")
   }
+  
+  print(paste("Se han guardado ", length(kalman), " graficos", sep=""))
 }
 
 #####     Recorrido de trayectorias para aplicar Kalman     #####
@@ -217,6 +227,8 @@ for (count in 1:cant_tr){
   
   trajectory_after_kalman[[count]] <- tr_kalman
 }
+
+print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", sep = ""))
 
 #####     Almacenar Datos      #####
 establecer_directorio_kalman(dataset)
