@@ -240,3 +240,36 @@ save_binnacles()
 save_trajectories(trajectory_after_kalman)
 
 
+
+
+#####     Graficas en Mapa     #####
+#install.packages("leaflet")
+#install.packages("mapview")
+packages <- c("RPostgreSQL","rlang", "ggplot2", "caret", "class", "mapview",  "compare", "pracma", "leaflet" , "stringr","SpatialTools","matlib", "dplyr","chron","lubridate","zoom","RgoogleMaps","ggmap") #librerias
+ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+ipak(packages)
+
+m <- leaflet()
+m <- addTiles(m)
+n_tr <- 88
+m <- addCircles(map = m, lng=lista_trayectorias_sinprocesar[[n_tr]]$longitude, lat =  lista_trayectorias_sinprocesar[[n_tr]]$latitude, radius = 0.05, weight = 5, color="red")
+m <- addCircles(map = m, lng=trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color="blue")
+#m <- addCircles(map = m, lng=trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color="yellow")
+m
+
+#webshot leaflet mapview
+#https://github.com/r-spatial/mapview/issues/274
+#https://github.com/cran/mapview/blob/master/R/mapshot.R
+#https://www.rdocumentation.org/packages/mapview/versions/2.9.0/topics/mapshot
+#https://wch.github.io/webshot/reference/install_phantomjs.html
+#https://www.rdocumentation.org/packages/webshot/versions/0.5.2/topics/install_phantomjs
+install_phantomjs(version = "2.1.1",
+                  baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/")
+getwd()
+#mapshot(m, url = "map.html", file = "Mapa localidad y trayectorias.png")
+mapshot(m, url = paste0(getwd(), "/map.html"), file = paste0(getwd(), "/map.png"))
