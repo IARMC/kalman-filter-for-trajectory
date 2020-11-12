@@ -7,7 +7,7 @@ library(RPostgreSQL)
 dbdriver <- "PostgreSQL";
 host <- 'localhost';
 port <- '5432';
-dbname <- 'CPPP';
+dbname <- 'CPPP2';
 user <- 'postgres';
 pass <- 'toor';
 drv <- dbDriver(dbdriver)
@@ -15,9 +15,79 @@ con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pa
 print("Conexion establecida")
 
 #####     Obtencion de la informacion desde la base de datos     #####
-dataset <- "brasil"
 print("Obtencion de los datos")
-data <- dbGetQuery(con, "SELECT longitude, latitude, unixtime, file_name FROM public.brasil WHERE  longitude BETWEEN  '-37.095' and '-37.04' and latitude BETWEEN  '-10.99' and '-10.89' and unixtime > '13/09/14' and unixtime <= '29/07/15' ")
+#data <- dbGetQuery(con, "SELECT longitude, latitude, unixtime, file_name FROM public.brasil WHERE  longitude BETWEEN  '-37.095' and '-37.04' and latitude BETWEEN  '-10.99' and '-10.89' and unixtime > '13/09/14' and unixtime <= '29/07/15' ")
+
+# 1. Brasil
+# 2. Beijing
+# 3. Guayaquil
+# 4. Guayaquil 1460
+# 5. Quito     1460
+# 6. California
+# 7. San Francisco
+# 8. Circular total
+# 9. Media circular
+# 10. Circular lineal
+# 11. Mitaad circular
+selected_dataset <- 1
+
+if (selected_dataset == 1) { 
+  dataset <- "Brasil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM brasil")
+  
+}else if (selected_dataset == 2) {
+  dataset <- "Beijing"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM beijing")
+  
+}else if (selected_dataset == 3) {
+  dataset <- "Guayaquil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM guayaquil")
+  
+}else if (selected_dataset == 4) {
+  dataset <- "Guayaquil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM guayaquilmin")
+  
+}else if (selected_dataset == 5) { 
+  dataset <- "Quito"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha  as unixtime, id as file_name FROM quitomin")
+  
+}else if (selected_dataset == 6) { 
+  dataset <- "California"
+  time_in_timestamp = 'TRUE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha  as unixtime, id as file_name 	FROM california")
+
+}else if (selected_dataset == 7){ 
+  dataset <- "Sanfrancisco"
+  time_in_timestamp = 'TRUE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM sanfrancisco")
+  
+}else if (selected_dataset == 8) { 
+  dataset <- "Circulartotal"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM circulartotal")
+  
+}else if (selected_dataset == 9) {
+  dataset <- "Mediacircular"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM mediacircular")
+  
+}else if (selected_dataset == 10) {
+  dataset <- "Circularlineal"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM circularlineal")
+  
+}else if (selected_dataset == 11) {
+  dataset <- "Mitadcircular"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM mitadcircular")
+  
+}
+
 dbDisconnect(con)
 
 #####     Preprocesamiento     #####
@@ -34,7 +104,7 @@ binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,R
 print("Varaibles de almacenameinto declaradas")
 
 #####     Division de los datos por trayectorias     #####
-array_name <- data.frame(file_name=unique(data$file_name)) 
+array_name <- data.frame(file_name = unique(data$file_name)) 
 
 todas <- data.frame(longitude = c(1:nrow(data)), latitude = 0, file_name = 0, speed = 0, unixtime = 0)
 todas$longitude <- data$longitude
@@ -364,4 +434,21 @@ sau <- proc.time()-t
 usa <- sau[3]
 usa
 
-#####     Metricas Kalman     #####
+#####     Contar puntos Kalman     #####
+cant_points <- nrow(binnacle_for_latitude)
+dimention <- binnacle_for_latitude
+
+coincide <- 0
+no_coincide <- 0
+
+for (count in 1:cant_points){
+  if(dimention$Medicion[count] == dimention$MedicionK[count]){
+    #print("Coincide")
+    coincide <- coincide + 1
+  }else{
+    #print("No coincide")
+    no_coincide <- no_coincide + 1
+  }
+}
+
+coincidencias <- c(coincide = coincide, no_coincide = no_coincide)
