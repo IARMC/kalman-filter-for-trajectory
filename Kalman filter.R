@@ -345,3 +345,23 @@ install_phantomjs(version = "2.1.1",baseURL = "https://github.com/wch/webshot/re
 print(getwd())
 #mapshot(m, url = "map.html", file = "Mapa localidad y trayectorias.png")
 mapshot(m, url = paste0(getwd(), "/map.html"), file = paste0(getwd(), "/map.png"))
+
+
+#####     Testeo tiempos de ejecucion     #####
+t <- proc.time()
+countdown <- function(from)
+{
+  print(from)
+  while(from!=0)
+  {
+    Sys.sleep(1)
+    from <- from - 1
+    print(from)
+  }
+}
+countdown(5)
+sau <- proc.time()-t
+usa <- sau[3]
+usa
+
+#####     Metricas Kalman     #####
