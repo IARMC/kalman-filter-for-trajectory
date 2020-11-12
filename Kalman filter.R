@@ -242,19 +242,19 @@ save_trajectories(trajectory_after_kalman)
 
 
 #####     Comprobacion con libreria     #####
-#dlm
 library(dlm)
 
 kalman_libreria <- list()
 
 nileBuild <- function(par) {
   dlmModPoly(order = 1, dV = exp(par[1]), dW = exp(par[2]))
+  #dlmModPoly(order = 1, dV = 0.5, dW = 0.125)
 }
 
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
 
 for (count in 1:cant_tr){
-  #count <- 93
+  count <- 1
   print(paste("Aplicando DLM Kalman. Trayectoria ",count,"...", sep = ""))
   tr_i <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(tr_i)
@@ -290,39 +290,39 @@ for (count in 1:cant_tr){
   kalman_libreria[[count]] <- new_frame_kalman
 }
 
-
-sel_tr <- 5
-kalman_libreria[[5]]
-guardar_trayectoria_individual(sel_tr, lista_trayectorias_sinprocesar[[sel_tr]], trajectory_after_kalman[[sel_tr]])
+#####     Comparativa Original - Kalman - DLM     #####
+sel_tr <- 1
+#kalman_libreria[[5]]
 nombre <- paste("Comparativa trayectoria ",sel_tr,".png",sep = "")
-png(filename = nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
-plot(x = lista_trayectorias_sinprocesar[[sel_tr]]$longitude, y=lista_trayectorias_sinprocesar[[sel_tr]]$latitude,type="l",col="red", xlab="Longitud", ylab="Latitud", main=paste("Results Kalman Filter_TR",sel_tr,sep = ""))
-points(x = trajectory_after_kalman[[sel_tr]]$longitude, y=trajectory_after_kalman[[sel_tr]]$latitude,type="l",col="blue")
-points(x = kalman_libreria[[sel_tr]]$x, y=kalman_libreria[[sel_tr]]$y,type="l",col="green")
+#png(filename = nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+plot(x = lista_trayectorias_sinprocesar[[sel_tr]]$longitude, 
+     y = lista_trayectorias_sinprocesar[[sel_tr]]$latitude,
+     type = "l", col = "red", xlab = "Longitud", ylab = "Latitud", 
+     main = paste("Results Kalman Filter_TR",sel_tr,sep = ""))
+points(x = trajectory_after_kalman[[sel_tr]]$longitude, 
+       y = trajectory_after_kalman[[sel_tr]]$latitude,
+       type = "l",col = "blue")
+points(x = kalman_libreria[[sel_tr]]$x, 
+       y = kalman_libreria[[sel_tr]]$y, 
+       type = "l", col = "green")
 #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
-legend("bottomleft",legend=c("Original","Filtro de Kalman","Libreria"),col=c("red","blue","green"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+legend("bottomleft",legend = c("Original","Filtro de Kalman","Libreria"), 
+       col = c("red","blue","green"), pch = 1, bty = "n", 
+       ncol = 1, cex = 1, pt.cex = 1)
 #Aplicar zoom al grafico
 #zoom::zm()
-dev.off()
+#dev.off()
+#dev.list()
 
-idtr <- 5
-nombre <- paste("trayectoria_",idtr,".png",sep = "")
-png(filename=nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
-plot(x=tr_original$longitude, y=tr_original$latitude,type="l",col="red", xlab="Longitud", ylab="Latitud", main=paste("Results Kalman Filter_TR",idtr,sep = ""))
-points(x=tr_kalman$longitude, y=tr_kalman$latitude,type="l",col="blue")
-#https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
-legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
-#Aplicar zoom al grafico
-#zoom::zm()
-dev.off()
 
 
 #####     Graficacion en Mapa     #####
-packages <- c("RPostgreSQL","rlang","kmlShape","brotli","dlm", "ggplot2", "caret", "class", "mapview",  "compare", "pracma" , "stringr","SpatialTools","matlib", "dplyr","chron","lubridate","zoom","RgoogleMaps","ggmap") #librerias 
-
+#packages <- c("RPostgreSQL","rlang", "kmlShape","brotli","dlm", "ggplot2", "caret", "class", "mapview",  "compare", "pracma" , "stringr","SpatialTools","matlib", "dplyr","chron","lubridate","zoom","RgoogleMaps","ggmap") #librerias 
+#packages <- c("RPostgreSQL","rlang", "ggplot2", "caret", "class", "mapview",  "compare", "pracma", "leaflet" , "stringr","SpatialTools","matlib", "dplyr","chron","lubridate","zoom","RgoogleMaps","ggmap") #librerias
 #install.packages("leaflet")
 #install.packages("mapview")
-packages <- c("RPostgreSQL","rlang", "ggplot2", "caret", "class", "mapview",  "compare", "pracma", "leaflet" , "stringr","SpatialTools","matlib", "dplyr","chron","lubridate","zoom","RgoogleMaps","ggmap") #librerias
+
+packages <- c("leaflet","mapview","webshot")
 ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -331,23 +331,17 @@ ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
 }
 ipak(packages)
 
+n_tr <- 42
 m <- leaflet()
 m <- addTiles(m)
-n_tr <- 42
-m <- addCircles(map = m, lng=lista_trayectorias_sinprocesar[[n_tr]]$longitude, lat =  lista_trayectorias_sinprocesar[[n_tr]]$latitude, radius = 0.05, weight = 5, color="red")
-m <- addCircles(map = m, lng=trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color="blue")
-#m <- addCircles(map = m, lng=trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color="yellow")
-m
+m <- addCircles(map = m, lng = lista_trayectorias_sinprocesar[[n_tr]]$longitude, lat =  lista_trayectorias_sinprocesar[[n_tr]]$latitude, radius = 0.05, weight = 5, color = "red")
+m <- addCircles(map = m, lng = trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color = "blue")
+#m <- addCircles(map = m, lng = trajectory_after_kalman[[n_tr]]$longitude, lat =  trajectory_after_kalman[[n_tr]]$latitude, radius = 0.05, weight = 5, color = "yellow")
+show(m)
 
-#webshot leaflet mapview
-#https://github.com/r-spatial/mapview/issues/274
-#https://github.com/cran/mapview/blob/master/R/mapshot.R
-#https://www.rdocumentation.org/packages/mapview/versions/2.9.0/topics/mapshot
-#https://wch.github.io/webshot/reference/install_phantomjs.html
-#https://www.rdocumentation.org/packages/webshot/versions/0.5.2/topics/install_phantomjs
-install_phantomjs(version = "2.1.1",
-                  baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/")
+
+install_phantomjs(version = "2.1.1",baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/")
 #webshot::install_phantomjs()
-getwd()
+print(getwd())
 #mapshot(m, url = "map.html", file = "Mapa localidad y trayectorias.png")
 mapshot(m, url = paste0(getwd(), "/map.html"), file = paste0(getwd(), "/map.png"))
