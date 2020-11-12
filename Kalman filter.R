@@ -254,7 +254,7 @@ nileBuild <- function(par) {
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
 
 for (count in 1:cant_tr){
-  count <- 1
+  #count <- 1
   print(paste("Aplicando DLM Kalman. Trayectoria ",count,"...", sep = ""))
   tr_i <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(tr_i)
