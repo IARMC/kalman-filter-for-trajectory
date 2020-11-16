@@ -18,18 +18,18 @@ print("Conexion establecida")
 print("Obtencion de los datos")
 #data <- dbGetQuery(con, "SELECT longitude, latitude, unixtime, file_name FROM public.brasil WHERE  longitude BETWEEN  '-37.095' and '-37.04' and latitude BETWEEN  '-10.99' and '-10.89' and unixtime > '13/09/14' and unixtime <= '29/07/15' ")
 
-# 1. Brasil
-# 2. Beijing
-# 3. Guayaquil
-# 4. Guayaquil 1460
-# 5. Quito     1460
-# 6. California
+# 1. Brasil     14096
+# 2. Beijing    62138
+# 3. Guayaquil  ~DATASET: TDTR
+# 4. Guayaquil  1460
+# 5. Quito      1460
+# 6. California 914684
 # 7. San Francisco
 # 8. Circular total
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 1
+selected_dataset <- 6
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
