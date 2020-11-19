@@ -29,7 +29,7 @@ print("Obtencion de los datos")
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 6
+selected_dataset <- 1
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
