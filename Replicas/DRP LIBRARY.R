@@ -256,11 +256,7 @@ algoritmo<- "DRP"						                              #Algorithm
 algoritmo <- paste(algoritmo, Sys.Date(),sep = "")
 #dataset<- "Sanfrancisco"                                                      #Base de datos
 I_3600 = 1 / 3600.0
-Epsilon<- 0.00001
-
-
-
-
+Epsilon<- 0.0004
 
 
 result<-list()                                                        #listas de datos que contendra los resultados por iteracion del algortimo
@@ -297,7 +293,7 @@ con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pa
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 4
+selected_dataset <- 6
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -385,13 +381,14 @@ for(count in 1:length(unique(todas$file_name))){
   tray_corresp <-subset(todas, todas$file_name == array_name$file_name[count])		##divido por trayectorias
   lista_trayectorias_sinprocesar[[count]] <-  tray_corresp
 }
+
 lista_trayectorias <- lista_trayectorias_sinprocesar
 cant_trayectorias <- length(lista_trayectorias)
 print('Cantidad de trayectorias')
 print(cant_trayectorias)
 
 #Prepocesar informacion
-trayectorias_informacion <-preprocesar_informacion(lista_trayectorias)
+trayectorias_informacion <- preprocesar_informacion(lista_trayectorias)
 
 
 
@@ -400,7 +397,7 @@ trayectorias_informacion <-preprocesar_informacion(lista_trayectorias)
 #frame_tray <- data.frame(x = lista_trayectorias[[1]]$longitude, y = lista_trayectorias[[1]]$latitude, t=lista_trayectorias[[1]]$unixtime,g=0)
 #matrix1 <- frame_tray 
 
-#####KALMAN!!!!!
+#####     KALMAN
 
 kalman_libreria <- list()
 
@@ -607,13 +604,17 @@ contador <- 0
 for (i in 1:length(lista_trayectorias)) {
   contador <- contador + nrow(result[[i]])
 }
-ABC <- c(Cant_Puntos = contador)
-print(ABC)
-summary(detalles)
+total_puntos <- c(Cant_Puntos = contador)
+
+
+medias <- summary(detalles)
 #print(detalles)
 #sumatoria de las columnas del dataset detalles
-print(sapply(detalles,sum))
-#epsilon, 
+sumatorias <- sapply(detalles,sum)
+
+metricas <- c(total_puntos, medias, suamtorias)
+
+#epsilon,
 #summary(detalles)
 #info <- sapply(detalles,mean)
 #mean(detalles$razon_compresion)
