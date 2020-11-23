@@ -256,7 +256,7 @@ algoritmo<- "DRP"						                              #Algorithm
 algoritmo <- paste(algoritmo, Sys.Date(),sep = "")
 #dataset<- "Sanfrancisco"                                                      #Base de datos
 I_3600 = 1 / 3600.0
-Epsilon<- 0.0004
+Epsilon<- 0.001
 
 
 result<-list()                                                        #listas de datos que contendra los resultados por iteracion del algortimo
@@ -293,7 +293,7 @@ con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pa
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 6
+selected_dataset <- 1
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -606,14 +606,15 @@ for (i in 1:length(lista_trayectorias)) {
 }
 total_puntos <- c(Cant_Puntos = contador)
 
-
-medias <- summary(detalles)
+medias <- c(sapply(detalles,mean))
+#medias <- summary(detalles)
 #print(detalles)
 #sumatoria de las columnas del dataset detalles
 sumatorias <- sapply(detalles,sum)
 
-metricas <- c(total_puntos, medias, suamtorias)
-
+write.table(total_puntos, file = "Metrica total puntos.txt", sep = ";", row.names = TRUE, col.names = TRUE)
+write.table(medias, file = "Metricas Medias.txt", sep = ";", row.names = TRUE, col.names = TRUE)
+write.table(sumatorias, file = "Metricas Sumatorias.txt", sep = ";", row.names = TRUE, col.names = TRUE)
 #epsilon,
 #summary(detalles)
 #info <- sapply(detalles,mean)
