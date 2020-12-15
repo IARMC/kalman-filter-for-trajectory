@@ -21,7 +21,92 @@ add_binnacle_latitude <- function(newBinnacle){
 }
 
 #####     Funciones de Tratamiento del Filtro de Kalman     #####
+get_dimentional_kalman <- function(dimention){
+  #input: class dimention => vector
+  tamanio_dimention <- length(dimention)
+  
+  binnacle <- data.frame(Medicion = c(1:tamanio_dimention), 
+                         MedicionK = 0, 
+                         Ruido_Proc = 0, 
+                         Ruido_Med = 0, 
+                         GainK = 0, 
+                         Cov = 0, 
+                         trayectoria = 0)
+  
+  Q <- 0  #Process noise covariance - Ruido del proceso     X
+  R <- 0  #Measurement noise covariance - Ruido del sensor  X
+  X <- 0  #Value - Valor filtrado
+  P <- 0  #Estimation error covariance - Error estimado
+  K <- 0  #Kalman gain - Ganancia de Kalman [0~1]
+  M <- 0  #Measurement MEDICION
+  
+  #Valores iniciales
+  Q <- 0.5 #0.125   0.33   0.5
+  R <- 0.125
+  P <- 1 #No importante, se ajusta durante el proceso
+  
+  #Calibrar valores
+  for (i in 1:tamanio_dimention) {
+    Medicion <- dimention[i]
+    M <- Medicion
+    P <- P + Q
+    K <- P / (P + R)
+    binnacle[i, 'GainK'] <- K
+    X <- X + K * (M - X)
+    P <- (1 - K) * P
+    binnacle[i, 'Cov'] <- P
+  }
+  
+  for (i in 1:tamanio_dimention) {
+    Medicion <- dimention[i]
+    binnacle[i, 'Medicion'] <- Medicion
+    M <- Medicion
+    
+    binnacle[i, 'Ruido_Proc'] <- Q
+    binnacle[i, 'Ruido_Med'] <- R
+    
+    #Prediccion
+    P <- P + Q
+    
+    #Correccion
+    K <- P / (P + R)  #[0~1]
+    
+    X <- X + K * (M - X)
+    if(i>2){
+      binnacle[i, 'MedicionK'] <- X
+    }else{
+      binnacle[i, 'MedicionK'] <- Medicion
+    }
+    
+    P <- (1 - K) * P
+  }
+  
+  return(binnacle)
+}
 
+create_dataframe_kalman <- function(longitude, latitude, file_name, unixtime){
+  kalman_dataframe <- data.frame(longitude, latitude, file_name, unixtime)
+  return(kalman_dataframe)
+}
+
+apply_kalman <- function(trayectoria) {
+  #Aplicar kalman a la latitud
+  binnacle_latitude <- get_dimentional_kalman(trayectoria$latitude)
+  binnacle_latitude$trayectoria <- trayectoria$file_name
+  add_binnacle_latitude(binnacle_latitude)
+  
+  #Aplicar kalman a la longitud
+  binnacle_longitude <- get_dimentional_kalman(trayectoria$longitude)
+  binnacle_longitude$trayectoria <- trayectoria$file_name
+  add_binnacle_longitude(binnacle_longitude)
+  
+  new_trajectory <- create_dataframe_kalman(longitude=binnacle_longitude$MedicionK, 
+                                            latitude=binnacle_latitude$MedicionK, 
+                                            file_name=trayectoria$file_name, 
+                                            unixtime=trayectoria$unixtime)
+  
+  return(new_trajectory)
+}
 
 #####     Funciones de Almacenamiento de Resultados del Filtro de Kalman     #####
 
