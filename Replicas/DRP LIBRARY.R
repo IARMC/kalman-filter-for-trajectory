@@ -256,7 +256,7 @@ algoritmo<- "DRP"						                              #Algorithm
 algoritmo <- paste(algoritmo, Sys.Date(),sep = "")
 #dataset<- "Sanfrancisco"                                                      #Base de datos
 I_3600 = 1 / 3600.0
-Epsilon<- 0.001
+Epsilon<- 0.00001
 
 
 result<-list()                                                        #listas de datos que contendra los resultados por iteracion del algortimo
@@ -293,7 +293,7 @@ con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pa
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 1
+selected_dataset <- 4
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -621,3 +621,9 @@ write.table(sumatorias, file = "Metricas Sumatorias.txt", sep = ";", row.names =
 #mean(detalles$razon_compresion)
 #mean(detalles[,"razon_compresion"])
 #detalles$razon_compresion
+
+#v0.21  3d~ 23/11/2020
+#write.csv(do.call(rbind,lista_trayectorias), file ="lista_trayectorias2excel.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+#write.csv(do.call(rbind,lista_trayectorias), file ="lista_trayectorias2excel.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+#write.csv2(do.call(rbind,lista_trayectorias),file ="lista_trayectoriascsv2.csv" , sep = ";")
+#write_xlsx(do.call(rbind,lista_trayectorias),"lista_trayectoriasxls.xlsx")

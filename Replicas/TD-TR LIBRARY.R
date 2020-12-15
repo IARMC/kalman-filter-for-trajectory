@@ -607,13 +607,17 @@ contador <- 0
 for (i in 1:length(lista_trayectorias)) {
   contador <- contador + nrow(result[[i]])
 }
-ABC <- c(Cant_Puntos = contador)
-print(ABC)
+total_puntos <- c(Cant_Puntos = contador)
 
-summary(detalles)
+medias <- c(sapply(detalles,mean))
+#medias <- summary(detalles)
 #print(detalles)
 #sumatoria de las columnas del dataset detalles
-print(sapply(detalles,sum))
+sumatorias <- sapply(detalles,sum)
+
+write.table(total_puntos, file = "Metrica total puntos.txt", sep = ";", row.names = TRUE, col.names = TRUE)
+write.table(medias, file = "Metricas Medias.txt", sep = ";", row.names = TRUE, col.names = TRUE)
+write.table(sumatorias, file = "Metricas Sumatorias.txt", sep = ";", row.names = TRUE, col.names = TRUE)
 #epsilon, 
 #summary(detalles)
 #info <- sapply(detalles,mean)

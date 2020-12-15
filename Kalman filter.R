@@ -29,7 +29,7 @@ print("Obtencion de los datos")
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 1
+selected_dataset <- 8
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -401,7 +401,7 @@ ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
 }
 ipak(packages)
 
-n_tr <- 42
+n_tr <- 1#42
 m <- leaflet()
 m <- addTiles(m)
 m <- addCircles(map = m, lng = lista_trayectorias_sinprocesar[[n_tr]]$longitude, lat =  lista_trayectorias_sinprocesar[[n_tr]]$latitude, radius = 0.05, weight = 5, color = "red")
