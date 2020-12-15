@@ -421,6 +421,92 @@ packages <- c("RPostgreSQL", "rlang", "ggplot2", "caret", "class",
               "RgoogleMaps", "ggmap")
 ipak(packages)
 
+#####     Conexion a la base de datos     #####
+dbdriver <- "PostgreSQL";
+host <- 'localhost';
+port <- '5432';
+dbname <- 'CPPP2';
+user <- 'postgres';
+pass <- 'toor';
+drv <- dbDriver(dbdriver)
+con <- dbConnect(drv, host = host, port = port, dbname = dbname, user = user, pass = pass)
+print("Conexion establecida")
+
+#####     Obtencion de la informacion desde la base de datos     #####
+print("Obtencion de los datos")
+#DataSets Disponibles:
+# 1. Brasil     14096
+# 2. Beijing    62138
+# 3. Guayaquil  ~DATASET: TDTR
+# 4. Guayaquil  1460
+# 5. Quito      1460
+# 6. California 914684
+# 7. San Francisco
+# 8. Circular total
+# 9. Media circular
+# 10. Circular lineal
+# 11. Mitaad circular
+selected_dataset <- 8
+
+if (selected_dataset == 1) { 
+  dataset <- "Brasil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM brasil")
+  
+}else if (selected_dataset == 2) {
+  dataset <- "Beijing"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM beijing")
+  
+}else if (selected_dataset == 3) {
+  dataset <- "Guayaquil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM guayaquil")
+  
+}else if (selected_dataset == 4) {
+  dataset <- "Guayaquil"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM guayaquilmin")
+  
+}else if (selected_dataset == 5) { 
+  dataset <- "Quito"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha  as unixtime, id as file_name FROM quitomin")
+  
+}else if (selected_dataset == 6) { 
+  dataset <- "California"
+  time_in_timestamp = 'TRUE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha  as unixtime, id as file_name 	FROM california")
+  
+}else if (selected_dataset == 7){ 
+  dataset <- "Sanfrancisco"
+  time_in_timestamp = 'TRUE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM sanfrancisco")
+  
+}else if (selected_dataset == 8) { 
+  dataset <- "Circulartotal"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM circulartotal")
+  
+}else if (selected_dataset == 9) {
+  dataset <- "Mediacircular"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM mediacircular")
+  
+}else if (selected_dataset == 10) {
+  dataset <- "Circularlineal"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM circularlineal")
+  
+}else if (selected_dataset == 11) {
+  dataset <- "Mitadcircular"
+  time_in_timestamp = 'FALSE'
+  data <- dbGetQuery(con, "SELECT longitud as longitude, latitud as latitude, fecha as unixtime, id as file_name FROM mitadcircular")
+  
+}
+
+dbDisconnect(con)
+
 #####     Preprocesamiento     #####
 sapply(data, function(x) sum(is.na(x)))
 data <- data[!is.na(data$longitude),]
