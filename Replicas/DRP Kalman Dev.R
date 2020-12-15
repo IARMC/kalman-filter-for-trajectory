@@ -12,7 +12,13 @@ ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
 }
 
 #####     Funciones de Tratamiento de Bitacoras del Filtro de Kalman     #####
+add_binnacle_longitude <- function(newBinnacle){
+  binnacle_for_longitude <<-  rbind(binnacle_for_longitude, newBinnacle)
+}
 
+add_binnacle_latitude <- function(newBinnacle){
+  binnacle_for_latitude <<-  rbind(binnacle_for_latitude, newBinnacle)
+}
 
 #####     Funciones de Tratamiento del Filtro de Kalman     #####
 
