@@ -194,7 +194,6 @@ drp<-function(points, dist_threshold){
   }else{return(points)}
 }
 
-
 graficar_inicial <- function(lista_trayectoria, trayectorias_informacion){
   par(lwd=2) 
   plot(0 ,ylim=c(min_latitud , max_latitud) , xlim= c(men_longitud , max_longitud ), xlab = 'Longitud', ylab = 'Latitud',main=dataset)
@@ -247,7 +246,6 @@ preprocesar_informacion <-  function (lista_trayectorias){
   return (trayectorias_informacion)
 }
 
-
 calcular_metricas <- function(){
   datos <-data.frame ( Grupos = c(1:(length(unique(trayectorias_informacion$Centroide))-1)), Cantidad_Trayectorias = 0, silhouette = 0) 
   for(i in 1:(length(unique(trayectorias_informacion$Centroide))-1)){
@@ -266,4 +264,41 @@ calcular_angulo <-  function (coord1 , coord2){
   return (anguloGrados)
 }
 
-#####     ABC     #####
+#####     MAIN     #####
+packages <- c("RPostgreSQL", "rlang", "ggplot2", "caret", "class", 
+              "mapview",  "compare", "pracma" , "stringr", "SpatialTools",
+              "matlib", "dplyr", "chron", "lubridate", "zoom",
+              "RgoogleMaps", "ggmap")
+ipak(packages)
+
+#####     Preprocesamiento     #####
+sapply(data, function(x) sum(is.na(x)))
+data <- data[!is.na(data$longitude),]
+data <- data[!is.na(data$latitude),]
+data <- data[!is.na(data$file_name),]
+data <- data[!is.na(data$unixtime),]
+print("Dataset Limpiado")
+
+trajectory_after_kalman <- list()
+binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+print("Varaibles de almacenameinto declaradas")
+
+#####     Division de los datos por trayectorias     #####
+array_name <- data.frame(file_name = unique(data$file_name)) 
+
+todas <- data.frame(longitude = c(1:nrow(data)), latitude = 0, file_name = 0, speed = 0, unixtime = 0)
+todas$longitude <- data$longitude
+todas$latitude  <- data$latitude
+todas$file_name <- data$file_name
+todas$unixtime  <- data$unixtime
+todas$speed     <- data$speed
+
+lista_trayectorias_sinprocesar <- list ()
+
+for(count in 1:length(unique(todas$file_name))){
+  tray_corresp <- subset(todas, todas$file_name == array_name$file_name[count])
+  lista_trayectorias_sinprocesar[[count]] <-  tray_corresp
+}
+print("Division por trayectorias finalizada")
+#####     Guardado de datos     #####
