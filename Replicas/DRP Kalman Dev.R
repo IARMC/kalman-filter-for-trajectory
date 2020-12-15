@@ -109,7 +109,66 @@ apply_kalman <- function(trayectoria) {
 }
 
 #####     Funciones de Almacenamiento de Resultados del Filtro de Kalman     #####
+#Establecer directorio
+establecer_directorio_kalman <- function(dataset){
+  simbol <- "\\"
+  root <- "C:"
+  setwd(paste("C:",simbol,sep=""))
+  
+  folder <- "Filtro-Kalman"
+  dir.create(folder);
+  setwd(paste(getwd(),simbol,folder,sep=""))
+  
+  algoritmo <- paste("Kalman_", Sys.Date(),sep = "")
+  dir.create(algoritmo);
+  setwd(paste(getwd(),simbol,algoritmo,sep=""))
+  
+  dir.create(dataset)
+  setwd(paste(getwd(),simbol,dataset,sep=""))
+  
+  print("Directorio Establecido")
+  return(getwd())
+}
 
+#Almacenamiento de las bitacoras
+save_binnacles <- function(){
+  write.table(binnacle_for_latitude, file ="binnacle-latitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(binnacle_for_longitude, file ="binnacle-longitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Bitacoras guardadas")
+}
+
+#Almacenamiento de los resultados
+save_trajectories <- function(list){
+  write.table(do.call(rbind,list), file ="trajectories-after-kalman.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Trayectorias guardadas")
+}
+
+#Almacenameinto de los graficos
+guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
+  nombre <- paste("trayectoria_",idtr,".png",sep = "")
+  png(filename=nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+  plot(x=tr_original$longitude, y=tr_original$latitude,type="l",col="red", xlab="Longitud", ylab="Latitud", main=paste("Results Kalman Filter_TR",idtr,sep = ""))
+  points(x=tr_kalman$longitude, y=tr_kalman$latitude,type="l",col="blue")
+  #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
+  legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  #Aplicar zoom al grafico
+  #zoom::zm()
+  dev.off()
+}
+
+guardar_graficos <- function(original, kalman){
+  if(length(original)==length(kalman)){
+    print("Guardando graficos...")
+    for (k in 1:length(original)) {
+      guardar_trayectoria_individual(idtr=k, tr_original = original[[k]], tr_kalman = kalman[[k]])
+    }
+    print("Graficos guardados.")
+  }else{
+    print("Error en la cantidad de trayectorias")
+  }
+  
+  print(paste("Se han guardado ", length(kalman), " graficos", sep=""))
+}
 
 #####     Funciones de Tratamiento de Algoritmos de Simplificacion     #####
 crear_directorio<- function(folders, algorithm, dataset){
