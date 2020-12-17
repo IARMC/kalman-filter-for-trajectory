@@ -145,12 +145,18 @@ save_trajectories <- function(list){
 
 #Almacenameinto de los graficos
 guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
-  nombre <- paste("trayectoria_",idtr,".png",sep = "")
-  png(filename=nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
-  plot(x=tr_original$longitude, y=tr_original$latitude,type="l",col="red", xlab="Longitud", ylab="Latitud", main=paste("Results Kalman Filter_TR",idtr,sep = ""))
-  points(x=tr_kalman$longitude, y=tr_kalman$latitude,type="l",col="blue")
+  nombre <- paste("trayectoria_", idtr, ".png", sep = "")
+  png(filename = nombre, width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+  plot(x = tr_original$longitude, 
+       y = tr_original$latitude,
+       type = "l",col = "red", 
+       xlab = "Longitud", ylab = "Latitud", 
+       main = paste("Results Kalman Filter_TR",idtr,sep = ""))
+  points(x = tr_kalman$longitude, 
+         y = tr_kalman$latitude, 
+         type = "l",col = "blue")
   #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
-  legend("bottomleft",legend=c("Original","Filtro de Kalman"),col=c("red","blue"), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  legend("bottomleft", legend = c("Original","Filtro de Kalman"), col = c("red","blue"), pch = 1, bty = "n", ncol = 1, cex = 1, pt.cex = 1)
   #Aplicar zoom al grafico
   #zoom::zm()
   dev.off()
@@ -160,7 +166,7 @@ guardar_graficos <- function(original, kalman){
   if(length(original)==length(kalman)){
     print("Guardando graficos...")
     for (k in 1:length(original)) {
-      guardar_trayectoria_individual(idtr=k, tr_original = original[[k]], tr_kalman = kalman[[k]])
+      guardar_trayectoria_individual(idtr = k, tr_original = original[[k]], tr_kalman = kalman[[k]])
     }
     print("Graficos guardados.")
   }else{
@@ -414,14 +420,14 @@ calcular_angulo <-  function (coord1 , coord2){
   return (anguloGrados)
 }
 
-#####     MAIN     #####
+#####     MAIN - KALMAN     #####
 packages <- c("RPostgreSQL", "rlang", "ggplot2", "caret", "class", 
               "mapview",  "compare", "pracma" , "stringr", "SpatialTools",
               "matlib", "dplyr", "chron", "lubridate", "zoom",
               "RgoogleMaps", "ggmap")
 ipak(packages)
 
-#####     Conexion a la base de datos     #####
+#####     Datos de la Conexion a la base de datos     #####
 dbdriver <- "PostgreSQL";
 host <- 'localhost';
 port <- '5432';
@@ -537,4 +543,34 @@ for(count in 1:length(unique(todas$file_name))){
   lista_trayectorias_sinprocesar[[count]] <-  tray_corresp
 }
 print("Division por trayectorias finalizada")
-#####     Guardado de datos     #####
+
+#####     Recorrido de la lista de trayectorias y aplicación de Kalman     #####
+cant_tr <- length(unique(lista_trayectorias_sinprocesar))
+
+for (count in 1:cant_tr){
+  print(paste("Aplicando Filtro de Kalman. Trayectoria ",count,"...", sep = ""))
+  
+  trayectoria_individual <- lista_trayectorias_sinprocesar[[count]]
+  cant_points <- nrow(trayectoria_individual)
+  
+  if(cant_points <= 2){
+    tr_kalman <- trayectoria_individual
+  }else{
+    tr_kalman <- apply_kalman(trayectoria_individual)
+  }
+  
+  trajectory_after_kalman[[count]] <- tr_kalman
+}
+
+print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", sep = ""))
+
+#####     Guardado/Almacenamiento de Resultados     #####
+establecer_directorio_kalman(dataset)
+
+guardar_graficos(lista_trayectorias_sinprocesar, trajectory_after_kalman)
+
+save_binnacles()
+
+save_trajectories(trajectory_after_kalman)
+
+#####     
