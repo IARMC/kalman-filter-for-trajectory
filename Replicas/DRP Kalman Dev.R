@@ -156,7 +156,9 @@ guardar_trayectoria_individual <- function(idtr, tr_original, tr_kalman){
          y = tr_kalman$latitude, 
          type = "l",col = "blue")
   #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/legend
-  legend("bottomleft", legend = c("Original","Filtro de Kalman"), col = c("red","blue"), pch = 1, bty = "n", ncol = 1, cex = 1, pt.cex = 1)
+  legend("bottomleft", legend = c("Original","Filtro de Kalman"), 
+         col = c("red","blue"), pch = 1, bty = "n", 
+         ncol = 1, cex = 1, pt.cex = 1)
   #Aplicar zoom al grafico
   #zoom::zm()
   dev.off()
@@ -174,6 +176,31 @@ guardar_graficos <- function(original, kalman){
   }
   
   print(paste("Se han guardado ", length(kalman), " graficos", sep=""))
+}
+
+#Guardado de las trayectorias en los mapas
+guardar_mapa_individual <- function(idtr, tr_original, tr_kalman){
+  nombre <- paste("Mapas\\","Trayectoria_", idtr, sep = "")
+  mapa <- leaflet()
+  mapa <- addTiles(mapa)
+  mapa <- addCircles(map = mapa, lng = tr_original[idtr]$longitude, lat = tr_original[idtr]$latitude, radius = 0.05, weight = 5, color = "red")
+  mapa <- addCircles(map = mapa, lng = tr_kalman[idtr]$longitude, lat = tr_kalman[idtr]$latitude, radius = 0.05, weight = 5, color = "blue")
+  #print(getwd())
+  mapshot(mapa, url = paste0(getwd(), nombre, ".html"), file = paste0(getwd(), nombre, ".png"))
+}
+
+guardar_en_mapa <- function(original, kalman){
+  if(length(original)==length(kalman)){
+    print("Guardando mapas...")
+    for (k in 1:length(original)) {
+      guardar_mapa_individual(idtr = k, tr_original = original[[k]], tr_kalman = kalman[[k]])
+    }
+    print("Mapas guardados.")
+  }else{
+    print("Error en la cantidad de trayectorias.")
+  }
+  
+  print(paste("Se han guardado ", length(kalman), " mapas", sep=""))
 }
 
 #####     Funciones de Tratamiento de Algoritmos de Simplificacion     #####
@@ -420,11 +447,11 @@ calcular_angulo <-  function (coord1 , coord2){
   return (anguloGrados)
 }
 
-#####     MAIN - KALMAN     #####
+#####     MAIN - Filtro de Kalman     #####
 packages <- c("RPostgreSQL", "rlang", "ggplot2", "caret", "class", 
               "mapview",  "compare", "pracma" , "stringr", "SpatialTools",
               "matlib", "dplyr", "chron", "lubridate", "zoom",
-              "RgoogleMaps", "ggmap")
+              "RgoogleMaps", "ggmap","leaflet","webshot")
 ipak(packages)
 
 #####     Datos de la Conexion a la base de datos     #####
@@ -513,7 +540,7 @@ if (selected_dataset == 1) {
 
 dbDisconnect(con)
 
-#####     Preprocesamiento     #####
+#####     Preprocesamiento para Kalman     #####
 sapply(data, function(x) sum(is.na(x)))
 data <- data[!is.na(data$longitude),]
 data <- data[!is.na(data$latitude),]
@@ -567,10 +594,39 @@ print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", 
 #####     Guardado/Almacenamiento de Resultados     #####
 establecer_directorio_kalman(dataset)
 
-guardar_graficos(lista_trayectorias_sinprocesar, trajectory_after_kalman)
+guardar_graficos(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
+
+#install_phantomjs(version = "2.1.1",baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/")
+#webshot::install_phantomjs()
+guardar_en_mapa(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
 
 save_binnacles()
 
 save_trajectories(trajectory_after_kalman)
 
-#####     
+#####     MAIN - Algoritmo de Simplificacion     #####
+print("Cuantas veces quieres ejecutar el algortimo?")
+cant_ejecuciones <- length(lista_trayectorias)
+
+print("Ingresa el Epsilon para cada experimento\n")
+for (i in 1:as.numeric(cant_ejecuciones) ) {
+  dist_threshold[i]<-Epsilon
+}
+#####     Variables de aplicación     #####
+I_3600 = 1 / 3600.0
+Epsilon<- 0.00001
+
+result<-list()
+time_proc<- list()
+dist_threshold<-list()
+lista_trayectorias <- list ()
+lista_trayectorias_sinprocesar <- list ()
+#####     Aplicacion del Algoritmo  de simplificacion     ######
+##  Adaptar a seleccion
+for (j in 1:as.numeric(cant_ejecuciones)) {
+  print(paste("RDP Trayectoria ",j ," de ", cant_trayectorias, sep = ""))
+  ini_iter<- as.POSIXct(Sys.time()) 
+  result[[j]]<-  drp(points = kalman_libreria[[j]], dist_threshold = dist_threshold[[j]])
+  end_iter<- as.POSIXct(Sys.time())
+  time_proc[[j]]<-c(ini_iter,end_iter)
+}
