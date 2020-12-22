@@ -642,7 +642,7 @@ for (p in  1:as.numeric(cant_ejecuciones)) {
   trayectorias_informacion$Cant_puntos_simplificados[p] <- aux
 }
 
-#####     Almacenamiento de los resultadosd el algoritmo de simplificación     #####
+#####     Almacenamiento de los resultados del algoritmo de simplificación     #####
 write.table(trayectorias_informacion, file ="trayectoria informacion.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
 write.table(do.call(rbind,lista_trayectorias), file ="lista_trayectorias.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
 write.table(do.call(rbind,result), file ="lista_trayectorias_simplificada.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
@@ -677,3 +677,21 @@ for (count in 1:as.numeric(cant_ejecuciones)) {
   rc[[count]] <- (1 - trayectorias_informacion$Cant_puntos_simplificados[count]/ trayectorias_informacion$Cant_puntos_originales[count]) *100
   #rc[[count]]<-(1 - (list_size[[count]]/nrow(todas)))*100
 }
+
+## TODO: Funcion para mergen de error
+
+#####     Resultados de los experimentos     #####
+
+detalles<- data.frame(n_experimento= 1:as.numeric(cant_ejecuciones), trayectoria_inicial= trayectorias_informacion$Cant_puntos_originales,
+                      epsilon= format(do.call(rbind,dist_threshold), scientific=F), trayectoria_final= trayectorias_informacion$Cant_puntos_simplificados,
+                      tiempo_proceso_Segundos= paste(do.call(rbind,time_proc)[,2]-do.call(rbind,time_proc)[,1],sep = ""),margen_Error=do.call(rbind,margen_e),razon_compresion=paste(do.call(rbind,rc),sep = ""))
+
+write.table(detalles, file = "Resultados de los experimentos.csv", sep = ";", row.names = FALSE, col.names = TRUE)
+
+png(paste("grafica_original.png",sep = ""), width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+graficar_inicial(lista_trayectoria = lista_trayectorias,trayectorias_informacion = trayectorias_informacion)
+dev.off()
+
+png(paste("grafica_simplificada.png",sep = ""), width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+graficar_inicial(lista_trayectoria = result,trayectorias_informacion = trayectorias_informacion)
+dev.off()
