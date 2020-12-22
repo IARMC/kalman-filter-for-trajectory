@@ -630,3 +630,50 @@ for (j in 1:as.numeric(cant_ejecuciones)) {
   end_iter<- as.POSIXct(Sys.time())
   time_proc[[j]]<-c(ini_iter,end_iter)
 }
+
+#Remover duplicados
+for (k in 1:as.numeric(cant_ejecuciones)) {
+  result[[k]]<- result[[k]][!duplicated(result[[k]]),]
+}
+
+##  Actualizacion de infomracion de trayectorias
+for (p in  1:as.numeric(cant_ejecuciones)) {
+  aux <- nrow(result[[p]])
+  trayectorias_informacion$Cant_puntos_simplificados[p] <- aux
+}
+
+#####     Almacenamiento de los resultadosd el algoritmo de simplificación     #####
+write.table(trayectorias_informacion, file ="trayectoria informacion.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+write.table(do.call(rbind,lista_trayectorias), file ="lista_trayectorias.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+write.table(do.call(rbind,result), file ="lista_trayectorias_simplificada.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+
+#####     Graficacion de cada trayectoria (original y simplificada)     ######
+for (count in trayectorias_informacion$No_Trayectoria) {
+  original<- lista_trayectorias[[count]]
+  simplificada<-result[[count]]
+  png(paste("trayectoria",count,".png",sep = ""), width = 1024, height = 720, units = 'px', pointsize = 20 ,res = NA)
+  plot(original[,1:2], type="b", cex=1.2,col=1, main=paste("trayectoria_",count,sep = ""))
+  points(simplificada[,1:2], type="b", cex=1.2,col=2)
+  legend("bottomright",legend=c("Original","Simplificada"),col=c(1,2), pch=1,bty="n",ncol=1,cex=1,pt.cex=1)
+  dev.off()
+}
+
+#####     Margen de Error     #####
+##  Tabla de tabulacion
+list_size<- list()
+for (a in 1:cant_ejecuciones) {
+  list_size[[a]]<-nrow(result[[a]]) 
+}
+
+##  Razon de compresion 
+values_z<-data.frame(valor_z=c(1.28,1.44,1.65,1.96,2.58),valor_confianza=c("80%","85%","90%","95%","99%"))
+
+print("Indique el valor de confianza:")
+print(values_z)
+opcion <- 1.96
+
+rc<- list()
+for (count in 1:as.numeric(cant_ejecuciones)) {
+  rc[[count]] <- (1 - trayectorias_informacion$Cant_puntos_simplificados[count]/ trayectorias_informacion$Cant_puntos_originales[count]) *100
+  #rc[[count]]<-(1 - (list_size[[count]]/nrow(todas)))*100
+}
