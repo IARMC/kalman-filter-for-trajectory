@@ -15,6 +15,10 @@ establecer_directorio<- function(algoritmo, dataset){
   root <- "C:"
   setwd(paste("C:",simbol,sep=""))
   
+  algoritmo <- paste("Compresiones",sep = "")
+  dir.create(algoritmo)
+  setwd(paste(getwd(),simbol,algoritmo,sep=""))
+  
   algoritmo <- paste("Compresion_", Sys.Date(),sep = "")
   dir.create(algoritmo)
   setwd(paste(getwd(),simbol,algoritmo,sep=""))
@@ -128,6 +132,27 @@ apply_kalman <- function(trayectoria) {
   return(new_trajectory)
 }
 
+coincidencia_per_dim <- function(dimention){
+  cant_points <- nrow(dimention)
+  coincide <- 0
+  no_coincide <- 0
+  for (count in 1:cant_points){
+    if(dimention$Medicion[count] == dimention$MedicionK[count]){
+      coincide <- coincide + 1
+    }else{
+      no_coincide <- no_coincide + 1
+    }
+  }
+  return (c(coincide = coincide, no_coincide = no_coincide, total = cant_points))
+}
+
+contar_coinc <- function(latitude, longitude){
+  c_latitud <- coincidencia_per_dim(latitude)
+  c_longitud <- coincidencia_per_dim(longitude)
+  dimension <- c("Latitud", "Longitud")
+  return (t(data.frame(Latitud = c_latitud, Longitud = c_longitud)))
+}
+
 #####     Funciones de Almacenamiento de Resultados del Filtro de Kalman     #####
 #Establecer directorio
 establecer_directorio_kalman <- function(dataset){
@@ -148,6 +173,13 @@ establecer_directorio_kalman <- function(dataset){
   
   print("Directorio Establecido")
   return(getwd())
+}
+
+#Guardar el conteo de coincidencias
+save_coincidencias <- function(coincidencias){
+  write.table(coincidencias, file ="coincidencias.csv" , sep = ";", row.names = TRUE, col.names = TRUE)
+  write.table(coincidencias, file ="coincidencias.txt" , sep = ";", row.names = TRUE, col.names = TRUE)
+  print("Coincidencias guardadas")
 }
 
 #Almacenamiento de las bitacoras
@@ -612,55 +644,15 @@ for (count in 1:cant_tr){
 print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", sep = ""))
 
 #####     Conteo Coincidencias     #####
-
-coincidencia_per_dim <- function(dimention){
-  cant_points <- nrow(dimention)
-  coincide <- 0
-  no_coincide <- 0
-  for (count in 1:cant_points){
-    if(dimention$Medicion[count] == dimention$MedicionK[count]){
-      coincide <- coincide + 1
-    }else{
-      no_coincide <- no_coincide + 1
-    }
-  }
-  return (c(coincide = coincide, no_coincide = no_coincide, total = cant_points))
-}
-
-contar_coinc <- function(latitude, longitude){
-  c_latitud <- coincidencia_per_dim(latitude)
-  c_longitud <- coincidencia_per_dim(longitude)
-  
-  return (t(data.frame(Latitud = c_latitud,Longitud = c_longitud)))
-}
-
 coincidencias <- contar_coinc(latitude = binnacle_for_latitude,longitude = binnacle_for_longitude)
 
-
-
-cant_points <- nrow(binnacle_for_latitude)
-dimention <- binnacle_for_latitude
-
-coincide_lat <- 0
-coincide_long <- 0
-no_coincide_lat <- 0
-no_coincide_long <- 0
-
-for (count in 1:cant_points){
-  if(dimention$Medicion[count] == dimention$MedicionK[count]){
-    #print("Coincide")
-    coincide <- coincide + 1
-  }else{
-    #print("No coincide")
-    no_coincide <- no_coincide + 1
-  }
-}
-
-coincidencias <- c(coincide = coincide, no_coincide = no_coincide)
 #####     RMSE     #####
+
 
 #####     Guardado/Almacenamiento de Resultados     #####
 establecer_directorio(algoritmo = "Kalman_", dataset = dataset)
+
+save_coincidencias(coincidencias = coincidencias)
 
 guardar_graficos(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
 
