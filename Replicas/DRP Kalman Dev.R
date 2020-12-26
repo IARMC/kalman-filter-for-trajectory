@@ -153,6 +153,26 @@ contar_coinc <- function(latitude, longitude){
   return (t(data.frame(Latitud = c_latitud, Longitud = c_longitud)))
 }
 
+calcular_RMSE <- function(original, kalman){
+  RMSE_latitud <- list()
+  RMSE_longitud <- list()
+  TR <- list()
+  
+  for (count in 1:cant_tr){
+    TR[[count]] <- lista_trayectorias_sinprocesar[[count]]$file_name[1]
+    RMSE_latitud[[count]] <- sqrt(mean((original[[count]]$latitude - kalman[[count]]$latitude)^2))
+    RMSE_longitud[[count]] <- sqrt(mean((original[[count]]$longitude - kalman[[count]]$longitude)^2))
+  }
+  
+  return(data.frame(TR = c(unlist(TR)), Latitud = c(unlist(RMSE_latitud)), Longitud = c(unlist(RMSE_longitud))))
+}
+
+obtain_mean <- function(RMSE){
+  lista <- list(RMSE_Latitud = RMSE$Latitud, 
+                RMSE_Longitud = RMSE$Longitud)
+  return(sapply(lista, mean))
+}
+
 #####     Funciones de Almacenamiento de Resultados del Filtro de Kalman     #####
 #Establecer directorio
 establecer_directorio_kalman <- function(dataset){
@@ -173,13 +193,6 @@ establecer_directorio_kalman <- function(dataset){
   
   print("Directorio Establecido")
   return(getwd())
-}
-
-#Guardar el conteo de coincidencias
-save_coincidencias <- function(coincidencias){
-  write.table(coincidencias, file ="coincidencias.csv" , sep = ";", row.names = TRUE, col.names = TRUE)
-  write.table(coincidencias, file ="coincidencias.txt" , sep = ";", row.names = TRUE, col.names = TRUE)
-  print("Coincidencias guardadas")
 }
 
 #Almacenamiento de las bitacoras
@@ -253,6 +266,28 @@ guardar_en_mapa <- function(original, kalman){
   }
   
   print(paste("Se han guardado ", length(kalman), " mapas", sep=""))
+}
+
+#Guardar el conteo de coincidencias
+save_coincidencias <- function(coincidencias){
+  write.table(coincidencias, file ="coincidencias.csv" , sep = ";", row.names = TRUE, col.names = TRUE)
+  write.table(coincidencias, file ="coincidencias.txt" , sep = ";", row.names = TRUE, col.names = TRUE)
+  print("Coincidencias guardadas")
+}
+
+#Guardar RMSE
+save_RMSE <- function(RMSE){
+  write.table(RMSE, file ="RMSE.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(RMSE, file ="RMSE.txt" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(RMSE, file ="RMSE_xls.csv" , dec = ",",sep = ";", row.names = FALSE, col.names = TRUE)
+  print("RMSE guardado")
+}
+
+save_mean_RMSE <- function(mean_RMSE){
+  write.table(mean_RMSE, file ="mean_RMSE.csv" , sep = ";", row.names = TRUE, col.names = FALSE)
+  write.table(mean_RMSE, file ="mean_RMSE.txt" , sep = ";", row.names = TRUE, col.names = FALSE)
+  write.table(mean_RMSE, file ="mean_RMSE_xls.csv" , dec = ",",sep = ";", row.names = TRUE, col.names = FALSE)
+  print("Media RMSE guardado")
 }
 
 #####     Funciones de Tratamiento de Algoritmos de Simplificacion     #####
@@ -647,12 +682,12 @@ print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", 
 coincidencias <- contar_coinc(latitude = binnacle_for_latitude,longitude = binnacle_for_longitude)
 
 #####     RMSE     #####
+RMSE <- calcular_RMSE(lista_trayectorias_sinprocesar, trajectory_after_kalman)
 
+mean_RMSE <- obtain_mean(RMSE)
 
 #####     Guardado/Almacenamiento de Resultados     #####
 establecer_directorio(algoritmo = "Kalman_", dataset = dataset)
-
-save_coincidencias(coincidencias = coincidencias)
 
 guardar_graficos(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
 
@@ -663,6 +698,12 @@ guardar_en_mapa(original = lista_trayectorias_sinprocesar, kalman = trajectory_a
 save_binnacles()
 
 save_trajectories(trajectory_after_kalman)
+
+save_coincidencias(coincidencias = coincidencias)
+
+save_RMSE(RMSE)
+
+save_mean_RMSE(mean_RMSE)
 
 #####     MAIN - Algoritmo de Simplificacion     #####
 print("Cuantas veces quieres ejecutar el algortimo?")
