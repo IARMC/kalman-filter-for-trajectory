@@ -479,7 +479,7 @@ print("Obtencion de los datos")
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 8
+selected_dataset <- 4
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -590,6 +590,54 @@ for (count in 1:cant_tr){
 }
 
 print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", sep = ""))
+
+#####     Conteo Coincidencias     #####
+
+coincidencia_per_dim <- function(dimention){
+  cant_points <- nrow(dimention)
+  coincide <- 0
+  no_coincide <- 0
+  for (count in 1:cant_points){
+    if(dimention$Medicion[count] == dimention$MedicionK[count]){
+      coincide <- coincide + 1
+    }else{
+      no_coincide <- no_coincide + 1
+    }
+  }
+  return (c(coincide = coincide, no_coincide = no_coincide, total = cant_points))
+}
+
+contar_coinc <- function(latitude, longitude){
+  c_latitud <- coincidencia_per_dim(latitude)
+  c_longitud <- coincidencia_per_dim(longitude)
+  
+  return (t(data.frame(Latitud = c_latitud,Longitud = c_longitud)))
+}
+
+coincidencias <- contar_coinc(latitude = binnacle_for_latitude,longitude = binnacle_for_longitude)
+
+
+
+cant_points <- nrow(binnacle_for_latitude)
+dimention <- binnacle_for_latitude
+
+coincide_lat <- 0
+coincide_long <- 0
+no_coincide_lat <- 0
+no_coincide_long <- 0
+
+for (count in 1:cant_points){
+  if(dimention$Medicion[count] == dimention$MedicionK[count]){
+    #print("Coincide")
+    coincide <- coincide + 1
+  }else{
+    #print("No coincide")
+    no_coincide <- no_coincide + 1
+  }
+}
+
+coincidencias <- c(coincide = coincide, no_coincide = no_coincide)
+#####     RMSE     #####
 
 #####     Guardado/Almacenamiento de Resultados     #####
 establecer_directorio_kalman(dataset)
