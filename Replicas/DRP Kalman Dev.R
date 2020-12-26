@@ -10,6 +10,26 @@ ipak <- function(pkg) { #cargar e instalar paquetes de manera dinamica
     install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
+establecer_directorio<- function(algoritmo, dataset){
+  simbol <- "\\"
+  root <- "C:"
+  setwd(paste("C:",simbol,sep=""))
+  
+  algoritmo <- paste("Compresion_", Sys.Date(),sep = "")
+  dir.create(algoritmo)
+  setwd(paste(getwd(),simbol,algoritmo,sep=""))
+  
+  dir.create(dataset)
+  setwd(paste(getwd(),simbol,dataset,sep=""))
+  
+  algoritmo <- paste("Kalman_", Sys.Date(),sep = "")
+  dir.create(algoritmo);
+  setwd(paste(getwd(),simbol,algoritmo,sep=""))
+  
+  print("Directorio Establecido")
+  
+  return(getwd())
+}
 
 #####     Funciones de Tratamiento de Bitacoras del Filtro de Kalman     #####
 add_binnacle_longitude <- function(newBinnacle){
@@ -640,7 +660,7 @@ coincidencias <- c(coincide = coincide, no_coincide = no_coincide)
 #####     RMSE     #####
 
 #####     Guardado/Almacenamiento de Resultados     #####
-establecer_directorio_kalman(dataset)
+establecer_directorio(algoritmo = "Kalman_", dataset = dataset)
 
 guardar_graficos(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
 
