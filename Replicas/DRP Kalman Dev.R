@@ -566,7 +566,7 @@ print("Obtencion de los datos")
 # 9. Media circular
 # 10. Circular lineal
 # 11. Mitaad circular
-selected_dataset <- 4
+selected_dataset <- 5
 
 if (selected_dataset == 1) { 
   dataset <- "Brasil"
@@ -638,6 +638,8 @@ print("Dataset Limpiado")
 trajectory_after_kalman <- list()
 binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
 binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+binnacle_for_latitude <- binnacle_for_latitude[-1,]
+binnacle_for_longitude <- binnacle_for_longitude[-1,]
 print("Varaibles de almacenameinto declaradas")
 
 #####     Division de los datos por trayectorias     #####
