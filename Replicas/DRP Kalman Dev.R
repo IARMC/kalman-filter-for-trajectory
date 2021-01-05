@@ -143,14 +143,17 @@ coincidencia_per_dim <- function(dimention){
       no_coincide <- no_coincide + 1
     }
   }
-  return (c(coincide = coincide, no_coincide = no_coincide, total = cant_points))
+  return (data.frame(coincide = coincide, no_coincide = no_coincide, total = cant_points))
 }
 
 contar_coinc <- function(latitude, longitude){
   c_latitud <- coincidencia_per_dim(latitude)
   c_longitud <- coincidencia_per_dim(longitude)
-  dimension <- c("Latitud", "Longitud")
-  return (t(data.frame(Latitud = c_latitud, Longitud = c_longitud)))
+  #dimension <- c("Latitud", "Longitud")
+  x <- rbind(c_latitud,c_longitud)
+  row.names(x) <- c("Latitud", "Longitud")
+  #return (data.frame(Latitud = c_latitud, Longitud = c_longitud))
+  return (x)
 }
 
 calcular_RMSE <- function(original, kalman){
@@ -270,7 +273,8 @@ guardar_en_mapa <- function(original, kalman){
 
 #Guardar el conteo de coincidencias
 save_coincidencias <- function(coincidencias){
-  write.table(coincidencias, file ="coincidencias.csv" , sep = ";", row.names = TRUE, col.names = TRUE)
+  #(coincidencias, file ="coincidencias.csv" , sep = ";", row.names = TRUE, col.names = TRUE)
+  write.csv(x = coincidencias, file = "coincidencias_csv.csv", row.names = TRUE, col.names = TRUE, sep = ",")
   write.table(coincidencias, file ="coincidencias.txt" , sep = ";", row.names = TRUE, col.names = TRUE)
   print("Coincidencias guardadas")
 }
