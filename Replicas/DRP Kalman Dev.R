@@ -212,6 +212,14 @@ establecer_directorio_kalman <- function(dataset){
   return(getwd())
 }
 
+#Linealidad
+save_linealidad <- function(linealidad){
+  write.table(linealidad, file ="linealidad.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(linealidad, file ="linealidad.txt" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(linealidad, file ="linealidad_xls.csv" , dec = ",",sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Resultados de linealidad guardado")
+}
+
 #Almacenamiento de las bitacoras
 save_binnacles <- function(){
   write.table(binnacle_for_latitude, file ="binnacle-latitude.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
@@ -697,12 +705,57 @@ for(count in 1:length(unique(todas$file_name))){
 }
 print("Division por trayectorias finalizada")
 
+#####     Reconocer linealidad     #####
+l_tr <- data.frame()
+id <- list()
+porcentaje <- list()
+tipo <- list()
+c_tr <- length(lista_trayectorias_sinprocesar)
+#longitud  =   X
+#latitud   =  Y
+for (count in 1:c_tr) {
+  ind_tr <- lista_trayectorias_sinprocesar[[count]]
+  contador <- 0
+  
+  for(i in 2:nrow(ind_tr)){
+    old_m <- 0
+    new_m <- 0
+    
+    #m = ( Y2 - Y1 ) / ( X2 - X1 )
+    Y2 <- ind_tr$latitude[i]
+    Y1 <- ind_tr$latitude[i-1]
+    X2 <- ind_tr$longitude[i]
+    X1 <- ind_tr$longitude[i-1]
+    
+    new_m <- ( Y2 - Y1 )/( X2 - X1 )
+    
+    if(is.nan(new_m)){
+      new_m <- 0
+    }
+    
+    if(old_m == new_m){
+      contador <- contador + 1
+    }
+    
+    old_m <- new_m
+  }
+  id[[count]] <- lista_trayectorias_sinprocesar[[count]]$file_name[1]
+  porcentaje[[count]] <- contador / nrow(ind_tr)
+  
+  if(contador < nrow(ind_tr)){
+    tipo[[count]] <- "No Lineal"
+  }else{
+    tipo[[count]] <- "Lineal"
+  }
+  
+}
+l_tr <- data.frame(TR = c(unlist(id)), Porcentaje = c(unlist(porcentaje)), Tipo = c(unlist(tipo)))
 
 #####     Recorrido de la lista de trayectorias y aplicación de Kalman     #####
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
 
 for (count in 1:cant_tr){
-  print(paste("Aplicando Filtro de Kalman. Trayectoria ",count,"...", sep = ""))
+  print(paste("Aplicando Filtro de Kalman. Trayectoria ",count,"...Trayectoria", l_tr$Tipo[count], sep = ""))
   
   trayectoria_individual <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(trayectoria_individual)
@@ -742,6 +795,8 @@ mean_RMSE <- obtain_mean(RMSE)
 
 #####     Guardado/Almacenamiento de Resultados     #####
 establecer_directorio(algoritmo = "Kalman_", dataset = dataset)
+
+save_linealidad(l_tr)
 
 guardar_graficos(original = lista_trayectorias_sinprocesar, kalman = trajectory_after_kalman)
 
