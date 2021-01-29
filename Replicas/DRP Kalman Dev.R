@@ -156,6 +156,20 @@ contar_coinc <- function(latitude, longitude){
   return (x)
 }
 
+calcular_tiempos <- function(tiempos){
+  tr_name <- list()
+  tiempo <- list()
+  for(count in 1:cant_tr){
+    tr_name[[count]] <- lista_trayectorias_sinprocesar[[count]]$file_name[1]
+    tiempo[[count]] <- tiempos[[count]][2]-tiempos[[count]][1]
+  }
+  return (data.frame(TR = c(unlist(tr_name)), Tiempo = c(unlist(tiempo))))
+}
+
+obtain_summary <- function(tiempos_kalman){
+  return (c(Suma = sum(tiempos_kalman$Tiempo), Media = mean(tiempos_kalman$Tiempo)))
+}
+
 calcular_RMSE <- function(original, kalman){
   RMSE_latitud <- list()
   RMSE_longitud <- list()
@@ -277,6 +291,21 @@ save_coincidencias <- function(coincidencias){
   write.csv(x = coincidencias, file = "coincidencias_csv.csv", row.names = TRUE, col.names = TRUE, sep = ",")
   write.table(coincidencias, file ="coincidencias.txt" , sep = ";", row.names = TRUE, col.names = TRUE)
   print("Coincidencias guardadas")
+}
+
+#Guardadr tiempos kalman
+save_tiempos_kalman <- function(tiempok){
+  write.table(tiempok, file ="tiempos-kalman.csv" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(tiempok, file ="tiempos-kalman.txt" , sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(tiempok, file ="tiempos-kalman_xls.csv" , dec = ",",sep = ";", row.names = FALSE, col.names = TRUE)
+  print("Tiempos de kalman guardado")
+}
+
+save_sumario_tiempos_kalman <- function(tiemposk){
+  write.table(tiemposk, file ="mean_tiempos_k.csv" , sep = ";", row.names = TRUE, col.names = FALSE)
+  write.table(tiemposk, file ="mean_timepos_k.txt" , sep = ";", row.names = TRUE, col.names = FALSE)
+  write.table(tiemposk, file ="mean_timepos_k_xls.csv" , dec = ",",sep = ";", row.names = TRUE, col.names = FALSE)
+  print("media y total de tiempos kalman guardado")
 }
 
 #Guardar RMSE
@@ -640,11 +669,15 @@ data <- data[!is.na(data$unixtime),]
 print("Dataset Limpiado")
 
 trajectory_after_kalman <- list()
-binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
-binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0)
+binnacle_for_latitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0, Error = 0)
+binnacle_for_longitude <- data.frame(Medicion = 0,MedicionK = 0,Ruido_Proc = 0,Ruido_Med = 0,GainK = 0,Cov = 0,trayectoria = 0, Error = 0)
 binnacle_for_latitude <- binnacle_for_latitude[-1,]
 binnacle_for_longitude <- binnacle_for_longitude[-1,]
 print("Varaibles de almacenameinto declaradas")
+
+tiempo_inicio_kalman <- 0
+tiempo_fin_kalman <- 0
+tiempos_trayectorias_kalman <- list()
 
 #####     Division de los datos por trayectorias     #####
 array_name <- data.frame(file_name = unique(data$file_name)) 
@@ -664,6 +697,7 @@ for(count in 1:length(unique(todas$file_name))){
 }
 print("Division por trayectorias finalizada")
 
+
 #####     Recorrido de la lista de trayectorias y aplicación de Kalman     #####
 cant_tr <- length(unique(lista_trayectorias_sinprocesar))
 
@@ -673,13 +707,18 @@ for (count in 1:cant_tr){
   trayectoria_individual <- lista_trayectorias_sinprocesar[[count]]
   cant_points <- nrow(trayectoria_individual)
   
+  tiempo_inicio_kalman <- as.POSIXct(Sys.time())
+  
   if(cant_points <= 2){
     tr_kalman <- trayectoria_individual
   }else{
     tr_kalman <- apply_kalman(trayectoria_individual)
   }
   
+  tiempo_fin_kalman <- as.POSIXct(Sys.time())
+  
   trajectory_after_kalman[[count]] <- tr_kalman
+  tiempos_trayectorias_kalman[[count]] <- c(inicio = tiempo_inicio_kalman, fin = tiempo_fin_kalman)
 }
 
 print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", sep = ""))
@@ -687,7 +726,16 @@ print(paste("Finalizado. Filtro de Kalman aplicado a ",cant_tr,"Trayectorias.", 
 #####     Conteo Coincidencias     #####
 coincidencias <- contar_coinc(latitude = binnacle_for_latitude,longitude = binnacle_for_longitude)
 
-#####     RMSE     #####
+#####     Calcular tiempos     #####
+tiempos_kalman <- calcular_tiempos(tiempos_trayectorias_kalman)
+
+summary_kalman <- obtain_summary(tiempos_kalman)
+
+#####     Error y RMSE     #####
+binnacle_for_longitude$Error <- abs(binnacle_for_longitude$Medicion - binnacle_for_longitude$MedicionK)
+binnacle_for_latitude$Error <- abs(binnacle_for_latitude$Medicion - binnacle_for_latitude$MedicionK)
+mean_error <- data.frame(Latitud = mean(binnacle_for_latitude$Error), Longitud = mean(binnacle_for_longitude$Error))
+
 RMSE <- calcular_RMSE(lista_trayectorias_sinprocesar, trajectory_after_kalman)
 
 mean_RMSE <- obtain_mean(RMSE)
@@ -706,6 +754,10 @@ save_binnacles()
 save_trajectories(trajectory_after_kalman)
 
 save_coincidencias(coincidencias = coincidencias)
+
+save_tiempos_kalman(tiempos_kalman)
+
+save_sumario_tiempos_kalman(summary_kalman)
 
 save_RMSE(RMSE)
 
